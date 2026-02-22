@@ -1,0 +1,8 @@
+# apt-herd - Herd apt update/upgrade across hosts via SSH
+# Install: bundle install --gemfile=Gemfile.apt-herd
+# Or: gem install net-ssh ed25519 bcrypt_pbkdf
+
+source 'https://rubygems.org'
+gem 'net-ssh', '~> 7.0'
+gem 'ed25519', '>= 1.2', '< 2.0'
+gem 'bcrypt_pbkdf', '>= 1.0', '< 2.0'

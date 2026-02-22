@@ -1,0 +1,19 @@
+# apt-herd config - list hosts on VPN or local LAN to run apt update/upgrade
+# Run: ./apt-herd.rb  (uses this file) or pass hosts on CLI
+
+ssh:
+  # Leave user unset to use $USER; only used for hosts NOT from ~/.ssh/config
+  port: 22
+  # keys: [ ~/.ssh/id_ed25519, ~/.ssh/id_rsa ]
+  timeout: 10
+
+# Use hosts from ~/.ssh/config (Host entries; wildcards like * are skipped)
+use_ssh_config: true
+# ssh_config_path: ~/.ssh/config   # optional, default is ~/.ssh/config
+
+# Optional: add hosts here; when use_ssh_config is true these are merged with ~/.ssh/config Host entries
+hosts:
+  # - 192.168.1.10
+  # - home-server.local
+  # - host: 192.168.1.20
+  #   user: admin
