@@ -1,5 +1,7 @@
 # apt-herd
 
+![GitHub total downloads](https://img.shields.io/github/downloads/hardenedpenguin/apt-herd/total?style=flat-square)
+
 Herds **apt update** and **apt upgrade** across multiple Debian-based systems over SSH—VPN, local LAN, or anywhere you can reach via SSH. One command updates all configured hosts.
 
 ## What it does
