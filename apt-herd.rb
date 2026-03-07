@@ -7,6 +7,7 @@ require 'net/ssh'
 require 'optparse'
 require 'yaml'
 require 'pathname'
+require 'etc'
 
 CONFIG_PATH = Pathname(__dir__) + 'apt-herd.yaml'
 DEFAULT_SSH_CONFIG = File.expand_path('~/.ssh/config')
@@ -103,6 +104,8 @@ def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, verbose: fa
          else
            ssh_opts[:user] || ENV['USER']
          end
+  # Cron often leaves USER unset; Net::SSH deprecates nil user
+  user = Etc.getpwuid(Process.uid).name if user.nil? || user.to_s.strip.empty?
   opts = ssh_opts.dup
   opts[:user] = user
   if host_ssh_config
