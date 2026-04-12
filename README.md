@@ -10,11 +10,13 @@ Herds **apt update** and **apt upgrade** across multiple Debian-based systems ov
 
 ## Requirements
 
-- Ruby (with `net/ssh`)
+- **Ruby 2.6 or newer** — apt-herd depends on net-ssh 7.x, which requires Ruby >= 2.6. Check with `ruby --version`.
 - SSH access to the target hosts (key-based or password)
 - Targets must be Debian/Ubuntu (or compatible) with `apt-get` and `sudo`
 
 ## Installation
+
+On Debian and Ubuntu, Ruby-related commands are often **version-suffix** binaries (for example `bundle3.3`, `gem3.3`) instead of plain `bundle` / `gem`. Use the executable that matches your installed Ruby (see `ruby --version` and `ls /usr/bin/bundle*` or `command -v bundle3.3`).
 
 **Option A – Bundler (recommended)**
 
@@ -22,11 +24,19 @@ Herds **apt update** and **apt upgrade** across multiple Debian-based systems ov
 bundle install --gemfile=Gemfile.apt-herd
 ```
 
+If `bundle` is not on your `PATH`, substitute the versioned name your distro provides, for example:
+
+```bash
+bundle3.3 install --gemfile=Gemfile.apt-herd
+```
+
 **Option B – Gem only**
 
 ```bash
 gem install net-ssh ed25519 bcrypt_pbkdf
 ```
+
+If needed, use `gem3.3` (or your Ruby’s `gem`) instead of `gem`.
 
 Make the script executable if needed:
 
