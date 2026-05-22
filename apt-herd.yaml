@@ -1,4 +1,4 @@
-# apt-herd config - list hosts on VPN or local LAN to run apt update/upgrade
+# apt-herd config - list hosts on VPN or local LAN to run apt update/full-upgrade
 # Run: ./apt-herd.rb  (uses this file) or pass hosts on CLI
 
 ssh:

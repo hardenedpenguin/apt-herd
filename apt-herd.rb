@@ -96,7 +96,13 @@ end
 
 def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, verbose: false)
   quiet = verbose ? '' : ' -qq'
-  cmd = "sudo apt-get update#{quiet} && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y#{quiet}"
+  dfe = 'sudo DEBIAN_FRONTEND=noninteractive'
+  cmd = [
+    "sudo apt update#{quiet}",
+    "#{dfe} apt full-upgrade -y#{quiet}",
+    "#{dfe} apt autoremove --purge -y#{quiet}",
+    'sudo apt clean'
+  ].join(' && ')
   target = (host_ssh_config && host_ssh_config[:host_name]) ? host_ssh_config[:host_name] : host
   # For hosts from SSH config: use that block's User or current user only (never YAML/CLI user)
   user = if host_ssh_config

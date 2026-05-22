@@ -1,10 +1,10 @@
 # apt-herd
 
-Herds **apt update** and **apt upgrade** across multiple Debian-based systems over SSH—VPN, local LAN, or anywhere you can reach via SSH. One command updates all configured hosts.
+Herds a full **apt** maintenance run across multiple Debian-based systems over SSH—VPN, local LAN, or anywhere you can reach via SSH. One command updates all configured hosts.
 
 ## What it does
 
-- SSHs to each host and runs: `sudo apt-get update` then `sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y`
+- SSHs to each host and runs: `sudo apt update`, `sudo apt full-upgrade -y`, `sudo apt autoremove --purge -y`, and `sudo apt clean` (noninteractive for upgrade steps)
 - Hosts come from `apt-herd.yaml`, `~/.ssh/config` (Host entries), CLI arguments, or a mix
 - Uses your existing SSH config (user, port, keys, hostname) per host when available
 
@@ -12,7 +12,7 @@ Herds **apt update** and **apt upgrade** across multiple Debian-based systems ov
 
 - **Ruby 2.6 or newer** — apt-herd depends on net-ssh 7.x, which requires Ruby >= 2.6. Check with `ruby --version`.
 - SSH access to the target hosts (key-based or password)
-- Targets must be Debian/Ubuntu (or compatible) with `apt-get` and `sudo`
+- Targets must be Debian/Ubuntu (or compatible) with `apt` and `sudo`
 
 ## Installation
 
@@ -99,7 +99,7 @@ Hosts from `hosts` and from SSH config (when `use_ssh_config: true`) are merged.
 | `-k`, `--key KEY` | SSH key path (repeatable) |
 | `-t`, `--timeout SEC` | SSH timeout in seconds |
 | `-n`, `--dry-run` | Print what would run, don’t run it |
-| `-v`, `--verbose` | Show apt-get output per host |
+| `-v`, `--verbose` | Show apt output per host |
 | `-c`, `--config PATH` | Config file path |
 | `--ssh-config` | Use hosts from `~/.ssh/config` |
 | `-h`, `--help` | Show help |
