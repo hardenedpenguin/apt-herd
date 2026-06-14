@@ -19,13 +19,6 @@ Install build deps first (match your Ruby version, e.g. Ruby 3.3):
 sudo apt install ruby3.3-dev build-essential
 ```
 
-**Bundler**
-
-```bash
-bundle3.3 install --gemfile=Gemfile.apt-herd
-./apt-herd.rb
-```
-
 **Gems only**
 
 ```bash
@@ -37,7 +30,6 @@ If a previous install failed with `Permission denied` under `/var/lib/gems/`, cl
 
 ```bash
 sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
-bundle3.3 install --gemfile=Gemfile.apt-herd
 ```
 
 ```bash
