@@ -1,7 +1,7 @@
 # apt-herd - Herd apt maintenance across hosts via SSH
 # Prereq (Debian): sudo apt install ruby3.3-dev
-# Install: sudo bundle3.3 install --gemfile=Gemfile.apt-herd && ./apt-herd.rb
-# Or user-local: bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle
+# Install: bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle && ./apt-herd.rb
+# System-wide: sudo bundle3.3 install --gemfile=Gemfile.apt-herd (always use sudo)
 # Or: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 
 source 'https://rubygems.org'

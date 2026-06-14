@@ -10,7 +10,7 @@ Run `apt update`, `full-upgrade`, `autoremove`, and `clean` across multiple Debi
 
 ## Install
 
-Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`. System gem dirs need `sudo`; use `--path vendor/bundle` to install locally without it.
+Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`.
 
 Install headers first (match your Ruby version, e.g. Ruby 3.3):
 
@@ -18,15 +18,32 @@ Install headers first (match your Ruby version, e.g. Ruby 3.3):
 sudo apt install ruby3.3-dev
 ```
 
-**Bundler**
+**Bundler (recommended — no sudo for gems)**
 
 ```bash
-sudo bundle3.3 install --gemfile=Gemfile.apt-herd
-# or: bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle
+bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle
 ./apt-herd.rb
 ```
 
-**Gems only**
+Gems install into `vendor/bundle/` in the repo (gitignored). No root access needed.
+
+**Bundler (system-wide)**
+
+Use `sudo` for every install/update — mixing `sudo` and non-`sudo` breaks `/var/lib/gems/` permissions:
+
+```bash
+sudo bundle3.3 install --gemfile=Gemfile.apt-herd
+./apt-herd.rb
+```
+
+If a previous install failed with `Permission denied` under `/var/lib/gems/`, clean up and retry with `sudo`:
+
+```bash
+sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
+sudo bundle3.3 install --gemfile=Gemfile.apt-herd
+```
+
+**Gems only (system-wide)**
 
 ```bash
 sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
