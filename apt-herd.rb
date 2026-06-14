@@ -18,8 +18,11 @@ require 'optparse'
 require 'yaml'
 require 'pathname'
 require 'etc'
+require 'json'
+require 'shellwords'
 
 CONFIG_PATH = Pathname(__dir__) + 'apt-herd.yaml'
+DEFAULT_CREDENTIALS_PATH = Pathname(__dir__) + 'apt-herd-credentials.json'
 DEFAULT_SSH_CONFIG = File.expand_path('~/.ssh/config')
 
 def parse_ssh_config(path = DEFAULT_SSH_CONFIG)
@@ -90,6 +93,50 @@ def hosts_from_config(config)
   list.map { |h| h.is_a?(Hash) ? h['host'] || h[:host] : h.to_s }.compact
 end
 
+def load_credentials(path)
+  path = Pathname(path).expand_path
+  return {} unless path.exist?
+  data = JSON.parse(path.read)
+  data.is_a?(Hash) ? data : {}
+rescue JSON::ParserError => e
+  warn "Credentials parse error: #{e.message}"
+  {}
+end
+
+def resolve_host_creds(credentials, host, target)
+  return {} if credentials.nil? || credentials.empty?
+
+  defaults = {
+    'user' => credentials['user'],
+    'password' => credentials['password'],
+    'sudo_password' => credentials['sudo_password']
+  }
+  host_entry = credentials.dig('hosts', host) || credentials.dig('hosts', target) || {}
+  defaults.merge(host_entry) { |_key, default, override| override.nil? ? default : override }
+end
+
+def build_apt_cmd(verbose:, sudo_password: nil)
+  quiet = verbose ? '' : ' -qq'
+  dfe = 'DEBIAN_FRONTEND=noninteractive'
+  parts = [
+    "apt update#{quiet}",
+    "#{dfe} apt full-upgrade -y#{quiet}",
+    "#{dfe} apt autoremove --purge -y#{quiet}",
+    'apt clean'
+  ]
+  if sudo_password && !sudo_password.to_s.empty?
+    pw = Shellwords.escape(sudo_password.to_s)
+    parts.map { |part| "echo #{pw} | sudo -S #{part}" }.join(' && ')
+  else
+    [
+      "sudo apt update#{quiet}",
+      "sudo #{dfe} apt full-upgrade -y#{quiet}",
+      "sudo #{dfe} apt autoremove --purge -y#{quiet}",
+      'sudo apt clean'
+    ].join(' && ')
+  end
+end
+
 def ssh_options_from_config(config)
   opts = config['ssh'] || {}
   {
@@ -101,18 +148,15 @@ def ssh_options_from_config(config)
   }
 end
 
-def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, verbose: false)
-  quiet = verbose ? '' : ' -qq'
-  dfe = 'sudo DEBIAN_FRONTEND=noninteractive'
-  cmd = [
-    "sudo apt update#{quiet}",
-    "#{dfe} apt full-upgrade -y#{quiet}",
-    "#{dfe} apt autoremove --purge -y#{quiet}",
-    'sudo apt clean'
-  ].join(' && ')
+def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, host_creds: {}, verbose: false)
   target = (host_ssh_config && host_ssh_config[:host_name]) ? host_ssh_config[:host_name] : host
+  sudo_password = host_creds['sudo_password']
+  sudo_password = host_creds['password'] if sudo_password.nil? || sudo_password.to_s.empty?
+  cmd = build_apt_cmd(verbose: verbose, sudo_password: sudo_password)
   # For hosts from SSH config: use that block's User or current user only (never YAML/CLI user)
-  user = if host_ssh_config
+  user = if host_creds['user'] && !host_creds['user'].to_s.empty?
+           host_creds['user']
+         elsif host_ssh_config
            host_ssh_config[:user] || ENV['USER']
          else
            ssh_opts[:user] || ENV['USER']
@@ -127,9 +171,16 @@ def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, verbose: fa
     opts[:keys] = host_ssh_config[:keys].any? ? host_ssh_config[:keys] : nil
     opts.delete(:keys) if opts[:keys].nil? || opts[:keys].empty?
   end
+  if host_creds['password'] && !host_creds['password'].to_s.empty?
+    opts[:password] = host_creds['password']
+    opts[:auth_methods] = %w[password publickey keyboard-interactive]
+    opts.delete(:keys)
+  end
 
   if dry_run
-    puts "[#{host}] (dry-run) #{user}@#{target} - would run: #{cmd}"
+    auth = host_creds['password'] ? 'password auth' : 'key auth'
+    sudo = sudo_password && !sudo_password.to_s.empty? ? 'sudo -S' : 'sudo'
+    puts "[#{host}] (dry-run) #{user}@#{target} (#{auth}, #{sudo}) - would run: #{cmd}"
     return { host: host, ok: true, out: '', err: '' }
   end
 
@@ -162,6 +213,7 @@ def main
     dry_run: false,
     verbose: false,
     config_path: nil,
+    credentials_path: nil,
     use_ssh_config: nil
   }
 
@@ -174,6 +226,7 @@ def main
     opts.on('-n', '--dry-run', 'Only print what would be run') { options[:dry_run] = true }
     opts.on('-v', '--verbose', 'Show command output') { options[:verbose] = true }
     opts.on('-c', '--config PATH', 'Config file path') { |c| options[:config_path] = c }
+    opts.on('-j', '--credentials PATH', 'Credentials JSON path') { |c| options[:credentials_path] = c }
     opts.on('--ssh-config', 'Use hosts from ~/.ssh/config') { use_ssh_config_cli = true }
     opts.on('-h', '--help', 'Show this help') { puts opts; exit }
   end.parse!
@@ -189,6 +242,10 @@ def main
   options[:port] ||= default_opts[:port]
   options[:keys] = default_opts[:keys] if default_opts[:keys].any? && options[:keys].empty?
   options[:timeout] ||= default_opts[:timeout]
+
+  creds_file = options[:credentials_path] || config['credentials'] || config[:credentials]
+  creds_file = DEFAULT_CREDENTIALS_PATH.to_s if creds_file.nil? && DEFAULT_CREDENTIALS_PATH.exist?
+  credentials = creds_file ? load_credentials(creds_file) : {}
 
   ssh_config_path = (config['ssh_config_path'] || config[:ssh_config_path] || DEFAULT_SSH_CONFIG).to_s
   ssh_config_path = File.expand_path(ssh_config_path)
@@ -225,7 +282,10 @@ def main
     host = host.strip
     print "Updating #{host}..." unless options[:dry_run]
     host_opts = ssh_config_host_opts[host]
-    r = run_remote(host, ssh_opts, dry_run: options[:dry_run], host_ssh_config: host_opts, verbose: options[:verbose])
+    target = (host_opts && host_opts[:host_name]) ? host_opts[:host_name] : host
+    host_creds = resolve_host_creds(credentials, host, target)
+    r = run_remote(host, ssh_opts, dry_run: options[:dry_run], host_ssh_config: host_opts,
+                   host_creds: host_creds, verbose: options[:verbose])
     results << r
     if options[:dry_run]
       # already printed

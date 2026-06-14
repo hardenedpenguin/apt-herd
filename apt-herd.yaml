@@ -1,6 +1,9 @@
 # apt-herd config - list hosts on VPN or local LAN to run apt update/full-upgrade
 # Run: ./apt-herd.rb  (uses this file) or pass hosts on CLI
 
+# Optional: credentials for SSH/sudo passwords (copy apt-herd-credentials.json.example)
+# credentials: apt-herd-credentials.json
+
 ssh:
   # Leave user unset to use $USER; only used for hosts NOT from ~/.ssh/config
   port: 22

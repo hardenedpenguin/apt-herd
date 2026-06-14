@@ -47,6 +47,27 @@ Edit `apt-herd.yaml` beside the script (or pass `-c /path/to/apt-herd.yaml`).
 
 Per-host SSH user/port/keys come from `~/.ssh/config` when available; otherwise use `ssh` settings or `-u`.
 
+### Password auth (no SSH keys)
+
+Copy the example and add your passwords (keep the real file private — it is gitignored):
+
+```bash
+cp apt-herd-credentials.json.example apt-herd-credentials.json
+chmod 600 apt-herd-credentials.json
+```
+
+Set defaults at the top level (`user`, `password`, `sudo_password`) and optional per-host overrides under `hosts` (keyed by hostname or IP from your host list).
+
+`sudo_password` feeds `sudo -S` so apt can run without an interactive terminal (needed for cron). If omitted, `password` is used for sudo as well.
+
+Reference in `apt-herd.yaml` (optional — auto-loads `apt-herd-credentials.json` if present):
+
+```yaml
+credentials: apt-herd-credentials.json
+```
+
+Or pass `-j /path/to/apt-herd-credentials.json`.
+
 ## Usage
 
 ```bash
@@ -71,6 +92,7 @@ Hosts: CLI args, `apt-herd.yaml`, and/or `~/.ssh/config` (see config above). Wit
 | `-n` | Dry run |
 | `-v` | Verbose |
 | `-c PATH` | Config file |
+| `-j PATH` | Credentials JSON path |
 | `--ssh-config` | Use `~/.ssh/config` hosts |
 | `-h` | Help |
 
