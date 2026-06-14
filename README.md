@@ -18,14 +18,16 @@ Install headers first (match your Ruby version, e.g. Ruby 3.3):
 sudo apt install ruby3.3-dev
 ```
 
-**Bundler (recommended — no sudo for gems)**
+**Bundler (recommended — no sudo)**
+
+This repo sets `.bundle/config` so gems install to `vendor/bundle/` (gitignored), not `/var/lib/gems/`:
 
 ```bash
-bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle
+bundle3.3 install --gemfile=Gemfile.apt-herd
 ./apt-herd.rb
 ```
 
-Gems install into `vendor/bundle/` in the repo (gitignored). No root access needed.
+Do **not** run plain `bundle3.3 install` without `--gemfile=Gemfile.apt-herd` — Bundler may ignore this project’s config and hit `/var/lib/gems/` (needs root).
 
 **Bundler (system-wide)**
 
