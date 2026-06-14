@@ -11,7 +11,7 @@ Run `apt update`, `full-upgrade`, `autoremove`, and `clean` across multiple Debi
 
 ## Install
 
-Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`. System gem dirs need `sudo` — always use `sudo` for install and update.
+Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`. System gem dirs need `sudo` for install and update.
 
 Install build deps first (match your Ruby version, e.g. Ruby 3.3):
 
@@ -19,10 +19,10 @@ Install build deps first (match your Ruby version, e.g. Ruby 3.3):
 sudo apt install ruby3.3-dev build-essential
 ```
 
-**Bundler**
+**Bundler** (run with `sudo` on Debian)
 
 ```bash
-sudo bundle3.3 install --gemfile=Gemfile.apt-herd
+bundle3.3 install --gemfile=Gemfile.apt-herd
 ./apt-herd.rb
 ```
 
@@ -37,7 +37,7 @@ If a previous install failed with `Permission denied` under `/var/lib/gems/`, cl
 
 ```bash
 sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
-sudo bundle3.3 install --gemfile=Gemfile.apt-herd
+bundle3.3 install --gemfile=Gemfile.apt-herd
 ```
 
 ```bash
