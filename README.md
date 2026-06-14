@@ -6,10 +6,17 @@ Run `apt update`, `full-upgrade`, `autoremove`, and `clean` across multiple Debi
 
 - Ruby 2.6+
 - SSH access to targets (`apt`, `sudo` on each host)
+- **Ruby dev headers** on the machine running apt-herd (`ed25519` / `bcrypt_pbkdf` compile native extensions)
 
 ## Install
 
 Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`. System gem dirs need `sudo`; use `--path vendor/bundle` to install locally without it.
+
+Install headers first (match your Ruby version, e.g. Ruby 3.3):
+
+```bash
+sudo apt install ruby3.3-dev
+```
 
 **Bundler**
 

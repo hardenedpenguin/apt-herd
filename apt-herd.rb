@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # apt-herd - Herd apt maintenance across Debian systems on VPN or local LAN via SSH
 # Usage: ./apt-herd.rb [options] [host1 host2 ...]
-# Requires: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf (or: sudo bundle3.3 install --gemfile=Gemfile.apt-herd)
+# Requires: sudo apt install ruby3.3-dev; then sudo gem3.3 install ... or sudo bundle3.3 install --gemfile=Gemfile.apt-herd
 
 gemfile = File.expand_path('Gemfile.apt-herd', __dir__)
 if File.exist?(gemfile)
