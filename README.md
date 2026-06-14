@@ -19,7 +19,7 @@ Install build deps first (match your Ruby version, e.g. Ruby 3.3):
 sudo apt install ruby3.3-dev build-essential
 ```
 
-**Bundler** (run with `sudo` on Debian)
+**Bundler**
 
 ```bash
 bundle3.3 install --gemfile=Gemfile.apt-herd
@@ -29,7 +29,7 @@ bundle3.3 install --gemfile=Gemfile.apt-herd
 **Gems only**
 
 ```bash
-sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
+gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 ./apt-herd.rb
 ```
 
