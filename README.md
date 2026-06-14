@@ -7,49 +7,37 @@ Run `apt update`, `full-upgrade`, `autoremove`, and `clean` across multiple Debi
 - Ruby 2.6+
 - SSH access to targets (`apt`, `sudo` on each host)
 - **Ruby dev headers** on the machine running apt-herd (`ed25519` / `bcrypt_pbkdf` compile native extensions)
+- **`build-essential`** on the machine running apt-herd (`make` is required to build those extensions)
 
 ## Install
 
-Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`.
+Debian ships versioned Ruby tools (`bundle3.3`, `gem3.3`). Match the suffix to `ruby --version`. System gem dirs need `sudo` — always use `sudo` for install and update.
 
-Install headers first (match your Ruby version, e.g. Ruby 3.3):
-
-```bash
-sudo apt install ruby3.3-dev
-```
-
-**Bundler (recommended — no sudo)**
-
-This repo sets `.bundle/config` so gems install to `vendor/bundle/` (gitignored), not `/var/lib/gems/`:
+Install build deps first (match your Ruby version, e.g. Ruby 3.3):
 
 ```bash
-bundle3.3 install --gemfile=Gemfile.apt-herd
-./apt-herd.rb
+sudo apt install ruby3.3-dev build-essential
 ```
 
-Do **not** run plain `bundle3.3 install` without `--gemfile=Gemfile.apt-herd` — Bundler may ignore this project’s config and hit `/var/lib/gems/` (needs root).
-
-**Bundler (system-wide)**
-
-Use `sudo` for every install/update — mixing `sudo` and non-`sudo` breaks `/var/lib/gems/` permissions:
+**Bundler**
 
 ```bash
 sudo bundle3.3 install --gemfile=Gemfile.apt-herd
 ./apt-herd.rb
 ```
 
-If a previous install failed with `Permission denied` under `/var/lib/gems/`, clean up and retry with `sudo`:
-
-```bash
-sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
-sudo bundle3.3 install --gemfile=Gemfile.apt-herd
-```
-
-**Gems only (system-wide)**
+**Gems only**
 
 ```bash
 sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 ./apt-herd.rb
+```
+
+If a previous install failed with `Permission denied` under `/var/lib/gems/`, clean up and retry:
+
+```bash
+sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
+sudo bundle3.3 install --gemfile=Gemfile.apt-herd
 ```
 
 ```bash
