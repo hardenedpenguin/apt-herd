@@ -1,7 +1,17 @@
 #!/usr/bin/env ruby
-# apt-herd - Herd apt update/upgrade across Debian systems on VPN or local LAN via SSH
+# apt-herd - Herd apt maintenance across Debian systems on VPN or local LAN via SSH
 # Usage: ./apt-herd.rb [options] [host1 host2 ...]
-# Requires: gem install net-ssh (or: bundle install --gemfile=Gemfile.apt-herd)
+# Requires: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf (or: sudo bundle3.3 install --gemfile=Gemfile.apt-herd)
+
+gemfile = File.expand_path('Gemfile.apt-herd', __dir__)
+if File.exist?(gemfile)
+  ENV['BUNDLE_GEMFILE'] ||= gemfile
+  begin
+    require 'bundler/setup'
+  rescue LoadError, Bundler::GemNotFound
+    # Fall back to system gems (e.g. sudo gem3.3 install)
+  end
+end
 
 require 'net/ssh'
 require 'optparse'
@@ -65,13 +75,10 @@ rescue StandardError => e
   { hosts: [], host_opts: {} }
 end
 
-def hosts_from_ssh_config(path = DEFAULT_SSH_CONFIG)
-  parse_ssh_config(path)[:hosts]
-end
-
-def load_config
-  return {} unless CONFIG_PATH.exist?
-  YAML.load_file(CONFIG_PATH) || {}
+def load_config(path = CONFIG_PATH)
+  path = Pathname(path).expand_path
+  return {} unless path.exist?
+  YAML.load_file(path) || {}
 rescue Psych::SyntaxError => e
   warn "Config parse error: #{e.message}"
   {}
@@ -127,14 +134,15 @@ def run_remote(host, ssh_opts, dry_run: false, host_ssh_config: nil, verbose: fa
   end
 
   out, err = '', ''
-  status = nil
+  exit_status = nil
   Net::SSH.start(target, user, opts) do |ssh|
-    ssh.exec!(cmd) do |_ch, stream, data|
+    status = {}
+    ssh.exec!(cmd, status: status) do |_ch, stream, data|
       (stream == :stderr ? err : out) << data
     end
-    status = ssh.exec!("echo $?").strip
+    exit_status = status[:exit_code]
   end
-  ok = status == '0'
+  ok = exit_status == 0
   { host: host, ok: ok, out: out, err: err }
 rescue Net::SSH::AuthenticationFailed => e
   { host: host, ok: false, out: '', err: "SSH auth failed: #{e.message}" }
@@ -145,19 +153,16 @@ rescue StandardError => e
 end
 
 def main
-  config = load_config
-  default_opts = ssh_options_from_config(config)
-  config_hosts = hosts_from_config(config)
-
+  use_ssh_config_cli = false
   options = {
-    user: default_opts[:user],
-    port: default_opts[:port],
-    keys: (default_opts[:keys] || []).dup,
-    timeout: default_opts[:timeout],
+    user: nil,
+    port: 22,
+    keys: [],
+    timeout: 10,
     dry_run: false,
     verbose: false,
     config_path: nil,
-    use_ssh_config: config['use_ssh_config']
+    use_ssh_config: nil
   }
 
   OptionParser.new do |opts|
@@ -169,19 +174,21 @@ def main
     opts.on('-n', '--dry-run', 'Only print what would be run') { options[:dry_run] = true }
     opts.on('-v', '--verbose', 'Show command output') { options[:verbose] = true }
     opts.on('-c', '--config PATH', 'Config file path') { |c| options[:config_path] = c }
-    opts.on('--ssh-config', 'Use hosts from ~/.ssh/config') { options[:use_ssh_config] = true }
+    opts.on('--ssh-config', 'Use hosts from ~/.ssh/config') { use_ssh_config_cli = true }
     opts.on('-h', '--help', 'Show this help') { puts opts; exit }
   end.parse!
 
-  if options[:config_path]
-    config = YAML.load_file(options[:config_path]) || {} rescue {}
-    config_hosts = hosts_from_config(config)
-    default_opts = ssh_options_from_config(config)
-    options[:user] ||= default_opts[:user]
-    options[:port] ||= default_opts[:port]
-    options[:keys] = default_opts[:keys] if default_opts[:keys].any?
-    options[:use_ssh_config] = config['use_ssh_config'] if options[:use_ssh_config].nil?
-  end
+  config_file = options[:config_path] || CONFIG_PATH.to_s
+  config = load_config(config_file)
+  default_opts = ssh_options_from_config(config)
+  config_hosts = hosts_from_config(config)
+
+  options[:use_ssh_config] = true if use_ssh_config_cli
+  options[:use_ssh_config] = config['use_ssh_config'] if options[:use_ssh_config].nil?
+  options[:user] ||= default_opts[:user]
+  options[:port] ||= default_opts[:port]
+  options[:keys] = default_opts[:keys] if default_opts[:keys].any? && options[:keys].empty?
+  options[:timeout] ||= default_opts[:timeout]
 
   ssh_config_path = (config['ssh_config_path'] || config[:ssh_config_path] || DEFAULT_SSH_CONFIG).to_s
   ssh_config_path = File.expand_path(ssh_config_path)
@@ -199,7 +206,7 @@ def main
   end
 
   if hosts.empty?
-    warn "No hosts given. Use -h for help, pass hostnames, set 'hosts' in #{CONFIG_PATH}, or use --ssh-config / use_ssh_config: true"
+    warn "No hosts given. Use -h for help, pass hostnames, set 'hosts' in #{config_file}, or use --ssh-config / use_ssh_config: true"
     exit 1
   end
 

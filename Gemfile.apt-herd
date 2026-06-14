@@ -1,6 +1,7 @@
-# apt-herd - Herd apt update/upgrade across hosts via SSH
-# Install: bundle install --gemfile=Gemfile.apt-herd (on Debian, often bundle3.3, etc.)
-# Or: gem install net-ssh ed25519 bcrypt_pbkdf
+# apt-herd - Herd apt maintenance across hosts via SSH
+# Install: sudo bundle3.3 install --gemfile=Gemfile.apt-herd && ./apt-herd.rb
+# Or user-local: bundle3.3 install --gemfile=Gemfile.apt-herd --path vendor/bundle
+# Or: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 
 source 'https://rubygems.org'
 ruby '>= 2.6.0'
