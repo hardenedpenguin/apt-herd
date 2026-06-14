@@ -22,7 +22,7 @@ sudo apt install ruby3.3-dev build-essential
 **Gems only**
 
 ```bash
-gem3.3 install net-ssh ed25519 bcrypt_pbkdf
+sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 ./apt-herd.rb
 ```
 
@@ -30,6 +30,7 @@ If a previous install failed with `Permission denied` under `/var/lib/gems/`, cl
 
 ```bash
 sudo rm -rf /var/lib/gems/3.3.0/gems/bcrypt_pbkdf-* /var/lib/gems/3.3.0/gems/ed25519-*
+sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 ```
 
 ```bash
