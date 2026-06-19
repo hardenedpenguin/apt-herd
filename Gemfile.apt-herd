@@ -1,7 +1,7 @@
-# apt-herd - Herd apt maintenance across hosts via SSH
-# Prereq (Debian): sudo apt install ruby3.3-dev build-essential
-# Install: sudo bundle3.3 install --gemfile=Gemfile.apt-herd && ./apt-herd.rb
-# Or: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
+# Optional dependency reference (install with gem3.3, not Bundler):
+#   sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
+#
+# Prereq: sudo apt install ruby3.3-dev build-essential
 
 source 'https://rubygems.org'
 ruby '>= 2.6.0'

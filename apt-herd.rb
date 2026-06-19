@@ -1,19 +1,15 @@
 #!/usr/bin/env ruby
 # apt-herd - Herd apt maintenance across Debian systems on VPN or local LAN via SSH
 # Usage: ./apt-herd.rb [options] [host1 host2 ...]
-# Requires: sudo apt install ruby3.3-dev build-essential; then sudo bundle3.3 install --gemfile=Gemfile.apt-herd
+# Requires: sudo apt install ruby3.3-dev build-essential
+#           sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf
 
-gemfile = File.expand_path('Gemfile.apt-herd', __dir__)
-if File.exist?(gemfile)
-  ENV['BUNDLE_GEMFILE'] ||= gemfile
-  begin
-    require 'bundler/setup'
-  rescue LoadError, Bundler::GemNotFound
-    # Fall back to system gems (e.g. sudo gem3.3 install)
-  end
+begin
+  require 'net/ssh'
+rescue LoadError
+  warn 'Missing net-ssh. Install with: sudo gem3.3 install net-ssh ed25519 bcrypt_pbkdf'
+  exit 1
 end
-
-require 'net/ssh'
 require 'optparse'
 require 'yaml'
 require 'pathname'
@@ -263,7 +259,9 @@ def main
   end
 
   if hosts.empty?
-    warn "No hosts given. Use -h for help, pass hostnames, set 'hosts' in #{config_file}, or use --ssh-config / use_ssh_config: true"
+    warn "No hosts configured."
+    warn "  Add hosts to apt-herd.yaml, pass hostnames on the CLI, or set use_ssh_config: true"
+    warn "  See README.md or run: #{File.basename($0)} -h"
     exit 1
   end
 
